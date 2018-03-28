@@ -19,9 +19,8 @@ void scaledown(FILE *copy4ptr, int width, int height, unsigned char pixels_array
 
 int main(int argc, char **argv) {
 
-  char *filename = argv[3];
-  // char filename[20] = "parrots.bmp";
-  printf("%s\n", optarg);
+  char *filename = argv[argc - 1];
+  printf("%s\n", argv[argc - 1]);
   int height, width, triple_width, option_index;
   FILE *infile = fopen(filename, "rb");
   FILE *outfile = fopen("outfile.bmp", "wb");
@@ -37,8 +36,6 @@ int main(int argc, char **argv) {
   unsigned char pixels[height][triple_width];
 
   fread( pixels, 1 , height * triple_width , infile);
-
-
 
   printf("W: %d, H: %d\n", width, height);
 
