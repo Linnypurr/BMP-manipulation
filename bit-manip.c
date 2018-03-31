@@ -20,79 +20,87 @@ void scaledown(FILE *copy4ptr, int width, int height, unsigned char pixels_array
 int main(int argc, char **argv) {
 
   char *filename = argv[argc - 1];
-  printf("%s\n", argv[argc - 1]);
-  int height, width, triple_width, option_index;
-  FILE *infile = fopen(filename, "rb");
-  FILE *outfile = fopen("outfile.bmp", "wb");
-  char header[HEADER_SIZE];
-
-  fread( header, 1 , HEADER_SIZE , infile);
-
-  width = *(int*)&header[18];
-  height = *(int*)&header[22];
-  triple_width = width * 3;
-
-  printf("W: %d, H: %d\n", triple_width, height);
-  unsigned char pixels[height][triple_width];
-
-  fread( pixels, 1 , height * triple_width , infile);
-
-  printf("W: %d, H: %d\n", width, height);
-
-  int pixels_size = sizeof(pixels);
-
-  struct option longopts[] = {
-    {"color", optional_argument, NULL, 'c'},
-    {"contrast", optional_argument, NULL, 't'},
-    {"mirror", optional_argument, NULL, 'm'},
-    {"scale", optional_argument, NULL, 's'},
-    {0, 0, 0, 0}
-  };
-
-  while ((option_index = getopt_long(argc, argv, "c:t:m:s:", longopts, NULL)) != -1) {
-    switch(option_index) {
-      case 'c':
-        printf("Color inversion selected.\n");
-        colorinversion(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
-        printf("Went to color inversion\n");
-        break;
-      case 't':
-        printf("Contrast selected.\n");
-        contrast(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
-        break;
-      case 'm':
-        printf("Mirroring selected.\n");
-        mirror(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
-        printf("Went to mirroring\n");
-        break;
-      case 's':
-        printf("Scale down selected.\n");
-        scaledown(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
-        printf("Scaling done\n");
-        break;
-      default:
-        printf("Not an option\n");
-        return 1;
-    }
+  char help_str[7] = "--help";
+  char h_str[3] = "-h";
+  int help_check;
+  if (strcmp(argv[argc -1], h_str) == 0) {
+    help_check = 0;
+  } else if (strcmp(argv[argc -1], help_str) == 0) {
+    help_check = 0;
+  } else {
+    help_check = 1;
   }
+  if (help_check != 0) {
+      int height, width, triple_width, option_index;
+      FILE *infile = fopen(filename, "rb");
+      FILE *outfile = fopen("outfile.bmp", "wb");
+      char header[HEADER_SIZE];
 
-  // colorinversion(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
-  // printf("Test\n");
-  // mirror(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
-  // scaledown(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
+      fread( header, 1 , HEADER_SIZE , infile);
 
-  fwrite(header, sizeof(char), HEADER_SIZE, outfile);
-  fwrite(pixels, sizeof(char), height * triple_width, outfile);
-  fclose(infile);
-  fclose(outfile);
-  printf("end oef main\n");
+      width = *(int*)&header[18];
+      height = *(int*)&header[22];
+      triple_width = width * 3;
+
+      unsigned char pixels[height][triple_width];
+
+      fread( pixels, 1 , height * triple_width , infile);
+
+      int pixels_size = sizeof(pixels);
+
+      struct option longopts[] = {
+        {"color", optional_argument, NULL, 'c'},
+        {"contrast", optional_argument, NULL, 't'},
+        {"mirror", optional_argument, NULL, 'm'},
+        {"flip", optional_argument, NULL, 'f'},
+        {"scale", optional_argument, NULL, 's'},
+        {0, 0, 0, 0}
+      };
+
+      while ((option_index = getopt_long(argc, argv, "c::t::m::f::s::h", longopts, NULL)) != -1) {
+        switch(option_index) {
+          case 'c':
+            colorinversion(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
+            break;
+          case 't':
+            contrast(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
+            break;
+          case 'm':
+            mirror(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
+            break;
+          case 'f':
+            flip(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
+            break;
+          case 's':
+            scaledown(outfile, triple_width, height, pixels, pixels_size, &header[0], HEADER_SIZE);
+            break;
+          default:
+            printf("Not an option, see --help.\n");
+            return 1;
+        }
+      }
+
+
+      fwrite(header, sizeof(char), HEADER_SIZE, outfile);
+      fwrite(pixels, sizeof(char), height * triple_width, outfile);
+      fclose(infile);
+      fclose(outfile);
+      printf("Wrote out image to outfile.bmp\n");
+    } else {
+      printf("The following options are available:\n");
+      printf("--color -c          Will invert the color of image argument\n");
+      printf("--contrast -t       Will contrast the image argument\n");
+      printf("--mirror -m         Will reflect the image argument vertically\n");
+      printf("--flip -f           Will flip the image argument upside down\n");
+      printf("--scale -s          Will seperate the image argument by RGB values\n");
+
+    }
   return 0;
 
 }
 
 //Color inversion method
 void colorinversion(FILE *copy1ptr, int width, int height, unsigned char pixels_array[height][width], int pixels_size, char *header_array, int header_size) {
-
   int h, w;
 
   for(h = 0; h < height; h++) {
@@ -104,7 +112,6 @@ void colorinversion(FILE *copy1ptr, int width, int height, unsigned char pixels_
     }
   }
 
-  printf("Wrote out color inversion\n");
 }
 
 //Contrast method
@@ -123,7 +130,6 @@ void contrast(FILE *copy2ptr, int width, int height, unsigned char pixels_array[
     }
   }
 
-  printf("Wrote out contrast\n");
 }
 
 //Helper method to find contrast
@@ -144,9 +150,6 @@ unsigned char bgrvalue(unsigned char current) {
 
 
   void mirror(FILE *copy3ptr, int width, int height, unsigned char pixels_array[height][width], int pixels_size, char *header_array, int header_size) {
-    printf("Went to mirror\n");
-    // [[]] [[]] [[]] [[]] [[]] || [] [] [] [] []
-
 
     int start_pnt = width / 2;
     if(start_pnt % 2 == 1) {
@@ -168,8 +171,6 @@ unsigned char bgrvalue(unsigned char current) {
       }
     }
 
-     flip(copy3ptr, width, height, pixels_array, pixels_size, header_array, header_size);
-
 
   }
 
@@ -179,7 +180,6 @@ void flip(FILE *copy3ptr, int width, int height, unsigned char pixels_array[heig
     int opposite = 0;
     unsigned char temp_char;
 
-
     for(row_index = height - 1; row_index >= height / 2; row_index--) {
       for(col_index = 0; col_index < width; col_index++) {
         temp_char = pixels_array[opposite][col_index];
@@ -188,9 +188,6 @@ void flip(FILE *copy3ptr, int width, int height, unsigned char pixels_array[heig
       }
       opposite++;
     }
-
-    printf("Done with mirroring\n");
-
 
 }
 
